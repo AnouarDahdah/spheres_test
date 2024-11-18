@@ -1,4 +1,4 @@
-```yaml
+
 model:
   grid_res: 20
   batch_size: 32
@@ -16,4 +16,4 @@ data:
   sphere:
     center_range: [-0.1, 0.1]
     radius_range: [0.5, 1.0]
-```
+
