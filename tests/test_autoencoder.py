@@ -1,4 +1,3 @@
-```python
 import torch
 import pytest
 from src.autoencoder import SDF_Autoencoder
@@ -20,4 +19,3 @@ def test_autoencoder_forward_pass():
     
     # Check output shape matches input
     assert output.shape == x.shape
-```
