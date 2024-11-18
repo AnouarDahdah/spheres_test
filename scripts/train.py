@@ -1,4 +1,4 @@
-```python
+
 import yaml
 import torch
 import torch.optim as optim
@@ -123,4 +123,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
+
