@@ -11,8 +11,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
-      # Checkout the repository
+      # Checkout repository
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -28,14 +29,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Debug directory structure (optional, for troubleshooting)
-      - name: Debug directory structure
-        run: |
-          echo "Workspace: ${{ github.workspace }}"
-          ls -R ${{ github.workspace }}
+      # Set PYTHONPATH
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=${{ github.workspace }}:${{ github.workspace }}/src" >> $GITHUB_ENV
 
-      # Run tests with explicit PYTHONPATH
+      # Debug folder structure
+      - name: Debug folder structure
+        run: |
+          echo "Workspace structure:"
+          ls -R
+
+      # Run tests
       - name: Run tests
-        env:
-          PYTHONPATH: ${{ github.workspace }}/src
         run: pytest --maxfail=1 --disable-warnings -v
