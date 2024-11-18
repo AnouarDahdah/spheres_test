@@ -10,7 +10,8 @@
 
 ## Installation
 ```bash
-git clone https://github.com/yourusername/sdf-autoencoder.git
+git clone https://github.com/AnouarDahdah/spheres_test.git
+
 cd sdf-autoencoder
 python -m venv venv
 source venv/bin/activate
