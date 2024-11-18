@@ -1,6 +1,6 @@
 ```yaml
 model:
-  grid_res: 30
+  grid_res: 20
   batch_size: 32
   num_samples: 2000
   latent_dim: 64
