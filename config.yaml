@@ -1,0 +1,19 @@
+```yaml
+model:
+  grid_res: 30
+  batch_size: 32
+  num_samples: 2000
+  latent_dim: 64
+
+training:
+  autoencoder_epochs: 5
+  predictor_epochs: 10
+  learning_rate: 0.001
+
+data:
+  grid_min: -1.5
+  grid_max: 1.5
+  sphere:
+    center_range: [-0.1, 0.1]
+    radius_range: [0.5, 1.0]
+```
