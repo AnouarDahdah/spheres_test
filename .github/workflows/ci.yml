@@ -1,4 +1,4 @@
-name: Simple CI Pipeline
+name: Python CI
 
 on:
   push:
@@ -28,4 +28,4 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest
+          pytest --maxfail=1 --disable-warnings -q
