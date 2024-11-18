@@ -1,4 +1,4 @@
-```python
+
 import torch
 import plotly.graph_objects as go
 from skimage import measure
@@ -56,4 +56,3 @@ class SDFVisualizer:
         )
 
         fig.write_html(filename)
-```
