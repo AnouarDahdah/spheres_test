@@ -15,10 +15,10 @@ jobs:
       fail-fast: false
 
     steps:
-    - uses: actions/checkout@v4  # Updated to v4 which uses Node 20
+    - uses: actions/checkout@v4
     
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5  # Updated to v5 which uses Node 20
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
@@ -31,24 +31,46 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install -e .  # Install package in editable mode
         pip install pytest pytest-cov mypy
-        pip list  # List installed packages for debugging
+        echo "Installed Python packages:"
+        pip list
+    
+    - name: Show project structure
+      run: |
+        echo "Project structure:"
+        tree -L 2 || (sudo apt-get install -y tree && tree -L 2)
     
     - name: Run unit tests
       run: |
-        pytest tests/ --cov=src/ --cov-report=xml -v --tb=long  # Added verbose output and long traceback
-    
-    - name: Type checking
-      run: |
-        mypy src/ --strict --show-error-codes  # Added error codes for better debugging
+        export PYTHONPATH=$PYTHONPATH:$(pwd)
+        pytest tests/ -v --tb=long --capture=no
 
-    # Added error artifact upload
-    - name: Upload pytest test results
+    - name: Type checking
+      if: success() || failure()  # Run even if tests fail
+      run: |
+        export PYTHONPATH=$PYTHONPATH:$(pwd)
+        mypy src/ --strict --show-error-codes
+
+    - name: List test directory contents
       if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: pytest-results-${{ matrix.python-version }}
-        path: |
-          .pytest_cache/
-          coverage.xml
+      run: |
+        echo "Tests directory contents:"
+        ls -R tests/
+        
+    - name: Show test file contents
+      if: failure()
+      run: |
+        for file in $(find tests/ -name "*.py"); do
+          echo "=== Contents of $file ==="
+          cat "$file"
+          echo "========================="
+        done
+
+    - name: Debug imports
+      if: failure()
+      run: |
+        echo "Python path:"
+        python -c "import sys; print('\n'.join(sys.path))"
+        echo "Trying to import the package:"
+        python -c "import src; print('Package imported successfully')"
