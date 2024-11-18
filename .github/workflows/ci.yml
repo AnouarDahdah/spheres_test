@@ -28,8 +28,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Run tests with PYTHONPATH
-      - name: Run tests
+      # Debug directory structure (optional, for troubleshooting)
+      - name: Debug directory structure
         run: |
-          export PYTHONPATH=$(pwd)/src
-          pytest --maxfail=1 --disable-warnings -v
+          echo "Workspace: ${{ github.workspace }}"
+          ls -R ${{ github.workspace }}
+
+      # Run tests with explicit PYTHONPATH
+      - name: Run tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src
+        run: pytest --maxfail=1 --disable-warnings -v
