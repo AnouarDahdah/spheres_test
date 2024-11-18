@@ -1,4 +1,4 @@
-```python
+
 import pytest
 import torch
 import yaml
@@ -27,4 +27,4 @@ def test_sphere_sdf_generation():
     
     assert sdf_batch.shape[1] == 1  # Single channel
     assert params_batch.shape[1] == 4  # x, y, z, radius
-```
+
