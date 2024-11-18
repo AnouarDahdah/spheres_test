@@ -28,8 +28,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # Set the PYTHONPATH for pytest
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$(pwd)/src" >> $GITHUB_ENV
+
       # Run tests
       - name: Run tests
         run: |
-          export PYTHONPATH=$(pwd)/src
-          pytest -v
+          pytest --maxfail=1 --disable-warnings -v
