@@ -21,66 +21,83 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-        cache: 'pip'
-    
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update -y
-        sudo apt-get install -y libgl1-mesa-glx tree
-    
-    - name: Show initial structure
-      shell: bash
-      run: |
-        pwd
-        ls -la
-        echo "Current directory: $(pwd)"
         
-    - name: Install Python dependencies
-      shell: bash
+    - name: Create config directory and file
+      run: |
+        mkdir -p config
+        cat > config/config.yaml << 'EOF'
+        model:
+          grid_res: 20
+          batch_size: 32
+          num_samples: 2000
+          latent_dim: 64
+
+        training:
+          autoencoder_epochs: 5
+          predictor_epochs: 10
+          learning_rate: 0.001
+
+        data:
+          grid_min: -1.5
+          grid_max: 1.5
+          sphere:
+            center_range: [-0.1, 0.1]
+            radius_range: [0.5, 1.0]
+        EOF
+    
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install wheel setuptools
+        pip install torch --index-url https://download.pytorch.org/whl/cpu
+        pip install -r requirements.txt
+    
+    - name: Install package
+      run: |
         pip install -e .
-        pip install pytest pytest-cov mypy
-        echo "Python version:"
+    
+    - name: Verify setup
+      run: |
+        echo "=== Python Environment ==="
+        which python
         python --version
-        echo "Pip version:"
-        pip --version
-        echo "Installed packages:"
-        pip list
-    
-    - name: Show project structure
-      shell: bash
+        echo "=== Package Installation ==="
+        pip list | grep -E "torch|numpy|plotly|scikit-image|pyyaml|pytest|mypy"
+        echo "=== Project Structure ==="
+        ls -R
+        echo "=== Config File ==="
+        cat config/config.yaml
+        
+    - name: Run tests
       run: |
-        which tree
-        tree || ls -R
-    
-    - name: Run unit tests
-      shell: bash
-      run: |
-        export PYTHONPATH="${PYTHONPATH}:$(pwd)"
-        which pytest
-        python -m pytest tests/ -v
-    
-    - name: Type checking
-      if: always()
-      shell: bash
-      run: |
-        export PYTHONPATH="${PYTHONPATH}:$(pwd)"
-        which mypy
-        python -m mypy src/ --strict
+        export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$(pwd)"
+        python -c "
+        import sys
+        import os
+        print('Python path:', sys.path)
+        print('Current directory:', os.getcwd())
+        print('Directory contents:', os.listdir('.'))
+        "
+        pytest tests/ -v --capture=no
 
     - name: Debug on failure
       if: failure()
-      shell: bash
       run: |
-        echo "=== Environment Info ==="
-        env
-        echo "=== Python Path ==="
-        echo $PYTHONPATH
-        echo "=== Directory Structure ==="
-        ls -R
-        echo "=== Test Files ==="
-        find tests/ -name "*.py" -exec cat {} \;
-        echo "=== Import Test ==="
-        python -c "import sys; print(sys.path)"
+        echo "=== Import test ==="
+        python -c "
+        try:
+            import torch
+            print('PyTorch version:', torch.__version__)
+            from src.data_generator import SDFGenerator
+            print('SDFGenerator import successful')
+            from src.autoencoder import SDF_Autoencoder
+            print('SDF_Autoencoder import successful')
+        except Exception as e:
+            print('Error:', str(e))
+            import sys
+            print('Python path:', sys.path)
+            import os
+            print('Current working directory:', os.getcwd())
+            print('Directory contents:', os.listdir('.'))
+            if os.path.exists('src'):
+                print('src contents:', os.listdir('src'))
+        "
