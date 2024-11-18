@@ -1,4 +1,4 @@
-```python
+
 from setuptools import setup, find_packages
 
 setup(
@@ -18,4 +18,4 @@ setup(
     long_description_content_type='text/markdown',
     python_requires='>=3.8',
 )
-```
+
