@@ -1,4 +1,4 @@
-```python
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -15,4 +15,4 @@ class LatentPredictor(nn.Module):
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
-```
+
