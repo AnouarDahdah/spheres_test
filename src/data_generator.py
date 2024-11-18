@@ -1,4 +1,4 @@
-```python
+
 import torch
 import numpy as np
 
@@ -45,4 +45,4 @@ class SDFGenerator:
             params_batch.append(torch.tensor([*center, radius], dtype=torch.float32))
 
         return torch.stack(sdf_batch).unsqueeze(1), torch.stack(params_batch)
-```
+
