@@ -1,103 +1,31 @@
-name: SDF Autoencoder CI
+name: CI Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.8, 3.9]
-      fail-fast: false
-
+    
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
-        
-    - name: Create config directory and file
-      run: |
-        mkdir -p config
-        cat > config/config.yaml << 'EOF'
-        model:
-          grid_res: 20
-          batch_size: 32
-          num_samples: 2000
-          latent_dim: 64
+        python-version: '3.8'
 
-        training:
-          autoencoder_epochs: 5
-          predictor_epochs: 10
-          learning_rate: 0.001
-
-        data:
-          grid_min: -1.5
-          grid_max: 1.5
-          sphere:
-            center_range: [-0.1, 0.1]
-            radius_range: [0.5, 1.0]
-        EOF
-    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install torch --index-url https://download.pytorch.org/whl/cpu
         pip install -r requirements.txt
-    
-    - name: Install package
-      run: |
-        pip install -e .
-    
-    - name: Verify setup
-      run: |
-        echo "=== Python Environment ==="
-        which python
-        python --version
-        echo "=== Package Installation ==="
-        pip list | grep -E "torch|numpy|plotly|scikit-image|pyyaml|pytest|mypy"
-        echo "=== Project Structure ==="
-        ls -R
-        echo "=== Config File ==="
-        cat config/config.yaml
-        
+
     - name: Run tests
       run: |
-        export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$(pwd)"
-        python -c "
-        import sys
-        import os
-        print('Python path:', sys.path)
-        print('Current directory:', os.getcwd())
-        print('Directory contents:', os.listdir('.'))
-        "
-        pytest tests/ -v --capture=no
-
-    - name: Debug on failure
-      if: failure()
-      run: |
-        echo "=== Import test ==="
-        python -c "
-        try:
-            import torch
-            print('PyTorch version:', torch.__version__)
-            from src.data_generator import SDFGenerator
-            print('SDFGenerator import successful')
-            from src.autoencoder import SDF_Autoencoder
-            print('SDF_Autoencoder import successful')
-        except Exception as e:
-            print('Error:', str(e))
-            import sys
-            print('Python path:', sys.path)
-            import os
-            print('Current working directory:', os.getcwd())
-            print('Directory contents:', os.listdir('.'))
-            if os.path.exists('src'):
-                print('src contents:', os.listdir('src'))
-        "
+        pytest --maxfail=1 --disable-warnings -q
