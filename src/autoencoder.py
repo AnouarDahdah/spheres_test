@@ -1,4 +1,4 @@
-```python
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -52,4 +52,4 @@ class SDF_Autoencoder(nn.Module):
     def forward(self, x):
         z = self.encode(x)
         return self.decode(z)
-```
+
