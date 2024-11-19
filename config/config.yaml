@@ -1,5 +1,6 @@
 
 model:
+  grid_res: 128
   grid_size: [32, 32, 32]
   batch_size: 16
   latent_dim: 32
