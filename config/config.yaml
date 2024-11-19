@@ -2,8 +2,8 @@
 model:
   grid_size: [32, 32, 32]
   batch_size: 16
-  num_samples: 2000
   latent_dim: 64
+  num_samples: 2000
 
 training:
   autoencoder_epochs: 5
