@@ -27,6 +27,7 @@ class SDF_Autoencoder(nn.Module):
         # Pass a dummy input through the encoder to calculate the flattened size
         dummy_input = torch.zeros(1, 1, grid_res, grid_res, grid_res)
 
+        # Apply the convolutions and pooling layers
         x = F.relu(self.enc_conv1(dummy_input))
         x = self.pool(x)
         x = F.relu(self.enc_conv2(x))
@@ -34,7 +35,8 @@ class SDF_Autoencoder(nn.Module):
         x = F.relu(self.enc_conv3(x))
         x = self.pool(x)
 
-        # Return the flattened dimension after the final pooling layer
+        # Output the size of the flattened tensor
+        print(f"Shape before flattening: {x.shape}")
         return x.numel()
 
     def encode(self, x):
@@ -62,6 +64,12 @@ class SDF_Autoencoder(nn.Module):
     def forward(self, x):
         if self.fc_encoder is None:
             # Set fc_encoder after calculating flatten_dim
+            flatten_dim = self._get_flatten_dim(self.grid_res)
+            self.fc_encoder = nn.Linear(flatten_dim, 32)  # Adjust latent_dim if necessary
+
+        z = self.encode(x)
+        return self.decode(z)
+
             self.fc_encoder = nn.Linear(self._get_flatten_dim(self.grid_res), 32)
 
         z = self.encode(x)
