@@ -5,16 +5,28 @@ from skimage import measure
 import plotly.io as pio
 
 class SDFVisualizer:
-    def __init__(self, config):
+    def __init__(self, grid_res=None, config=None):
         """
         Initialize the SDF Visualizer
         
         Args:
-            config: dict containing model configuration
-                - Should include grid_size under config['model']
+            grid_res: int or tuple - Grid resolution (for backward compatibility)
+            config: dict - Configuration dictionary containing model parameters
         """
-        self.grid_size = config['model']['grid_size']
-        self.grid_min = -3  # Matching the generator's grid range
+        if config is not None:
+            # If config is provided, use grid_size from config
+            self.grid_size = config['model']['grid_size']
+        elif grid_res is not None:
+            # If grid_res is provided directly
+            if isinstance(grid_res, int):
+                self.grid_size = (grid_res, grid_res, grid_res)
+            else:
+                self.grid_size = grid_res
+        else:
+            # Default value
+            self.grid_size = (32, 32, 32)
+            
+        self.grid_min = -3
         self.grid_max = 3
         pio.renderers.default = "notebook"
     
