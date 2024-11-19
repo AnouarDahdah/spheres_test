@@ -11,11 +11,17 @@
 ## Installation
 ```bash
 git clone https://github.com/AnouarDahdah/spheres_test.git
+cd spheres_test
 
-cd sdf-autoencoder
+# Create a virtual environment
 python -m venv venv
-source venv/bin/activate
+
+# Activate the virtual environment
+source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+
+# Install dependencies
 pip install -r requirements.txt
+
 ```
 
 ## Usage
