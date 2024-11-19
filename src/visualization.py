@@ -5,16 +5,25 @@ from skimage import measure
 import plotly.io as pio
 
 class SDFVisualizer:
-    def __init__(self, grid_res=32):  # Updated to match your model's grid_res
-        self.grid_res = grid_res
+    def __init__(self, config):
+        """
+        Initialize the SDF Visualizer
+        
+        Args:
+            config: dict containing model configuration
+                - Should include grid_size under config['model']
+        """
+        self.grid_size = config['model']['grid_size']
+        self.grid_min = -3  # Matching the generator's grid range
+        self.grid_max = 3
         pio.renderers.default = "notebook"
     
     def save_sdf_as_3d_isosurface(self, sdf, filename, isovalue=0.0):
         """
-        Save SDF as 3D isosurface with improved visualization and error handling
+        Save SDF as 3D isosurface with improved visualization
         
         Args:
-            sdf: torch.Tensor or numpy.ndarray - The signed distance field
+            sdf: torch.Tensor - The signed distance field [batch, channel, depth, height, width]
             filename: str - Output filename for the HTML visualization
             isovalue: float - The isosurface level value (default: 0.0)
         """
@@ -22,11 +31,11 @@ class SDFVisualizer:
         if isinstance(sdf, torch.Tensor):
             sdf = sdf.detach().cpu().numpy()
         
-        # If the input is 4D or 5D (has batch/channel dimensions), take the first element
+        # Handle batch and channel dimensions
         if sdf.ndim > 3:
-            sdf = sdf[0]
+            sdf = sdf[0]  # Remove batch dimension if present
         if sdf.ndim > 3:
-            sdf = sdf[0]
+            sdf = sdf[0]  # Remove channel dimension if present
             
         # Ensure we have a 3D array
         assert sdf.ndim == 3, f"Expected 3D array, got shape {sdf.shape}"
@@ -34,13 +43,8 @@ class SDFVisualizer:
         # Print value range for debugging
         print(f"SDF value range: [{sdf.min():.4f}, {sdf.max():.4f}]")
         
-        # Normalize SDF values if they're too large/small
-        if sdf.max() > 1.0 or sdf.min() < -1.0:
-            sdf = np.clip(sdf, -1.0, 1.0)
-            print("SDF values clipped to [-1, 1] range")
-        
         try:
-            # Try to generate the isosurface
+            # Generate the isosurface
             verts, faces, normals, values = measure.marching_cubes(
                 sdf,
                 level=isovalue,
@@ -48,8 +52,8 @@ class SDFVisualizer:
                 method='lewiner'
             )
             
-            # Scale vertices to desired range
-            verts = verts / self.grid_res * 3 - 1.5
+            # Scale vertices to match the grid range used in generation
+            verts = verts / np.array(self.grid_size) * (self.grid_max - self.grid_min) + self.grid_min
             
             # Create the 3D visualization
             fig = go.Figure(data=[go.Mesh3d(
@@ -70,18 +74,24 @@ class SDFVisualizer:
                 flatshading=True
             )])
             
-            # Update layout with improved settings
+            # Update layout for better visualization
             fig.update_layout(
                 scene=dict(
-                    xaxis=dict(range=[-2, 2], showbackground=True, 
+                    xaxis=dict(range=[self.grid_min, self.grid_max], 
+                              showbackground=True,
                               gridcolor="rgb(200, 200, 200)",
-                              zeroline=True, zerolinecolor="rgb(128, 128, 128)"),
-                    yaxis=dict(range=[-2, 2], showbackground=True, 
+                              zeroline=True, 
+                              zerolinecolor="rgb(128, 128, 128)"),
+                    yaxis=dict(range=[self.grid_min, self.grid_max], 
+                              showbackground=True,
                               gridcolor="rgb(200, 200, 200)",
-                              zeroline=True, zerolinecolor="rgb(128, 128, 128)"),
-                    zaxis=dict(range=[-2, 2], showbackground=True, 
+                              zeroline=True, 
+                              zerolinecolor="rgb(128, 128, 128)"),
+                    zaxis=dict(range=[self.grid_min, self.grid_max], 
+                              showbackground=True,
                               gridcolor="rgb(200, 200, 200)",
-                              zeroline=True, zerolinecolor="rgb(128, 128, 128)"),
+                              zeroline=True, 
+                              zerolinecolor="rgb(128, 128, 128)"),
                     aspectmode='cube',
                     camera=dict(
                         up=dict(x=0, y=0, z=1),
@@ -102,6 +112,8 @@ class SDFVisualizer:
             # Save the visualization
             fig.write_html(filename)
             print(f"Successfully saved visualization to {filename}")
+            
+            return fig  # Return figure for optional display in notebook
             
         except ValueError as e:
             print(f"Error generating isosurface: {str(e)}")
