@@ -28,8 +28,15 @@ pip install -r requirements.txt
 ```bash
 # Train the model
 python main.py
+```
+To run the tests:
 
-# Run tests
+1-Export the project root directory to the PYTHONPATH:
+```bash
+export PYTHONPATH=$(pwd)
+```
+2-Run the tests with pytest:
+```bash
 pytest tests/
 ```
 
