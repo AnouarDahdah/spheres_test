@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class SDF_Autoencoder(nn.Module):
+class SDF_Autoencoder(nn.Module): 
     def __init__(self, grid_res=20, latent_dim=32):
         super(SDF_Autoencoder, self).__init__()
         self.grid_res = grid_res
@@ -17,8 +17,10 @@ class SDF_Autoencoder(nn.Module):
         self.enc_conv3 = nn.Conv3d(32, 64, kernel_size=3, padding=1)
         self.pool = nn.MaxPool3d(2)
 
+        # Calculate flatten_dim dynamically based on the grid_res
+        self.flatten_dim = self._get_flatten_dim(grid_res)
+        
         # Latent space
-        self.flatten_dim = 64 * (self.s3 ** 3)
         self.fc_encoder = nn.Linear(self.flatten_dim, latent_dim)
         self.fc_decoder = nn.Linear(latent_dim, self.flatten_dim)
 
@@ -26,6 +28,12 @@ class SDF_Autoencoder(nn.Module):
         self.dec_conv1 = nn.ConvTranspose3d(64, 32, kernel_size=2, stride=2)
         self.dec_conv2 = nn.ConvTranspose3d(32, 16, kernel_size=2, stride=2)
         self.dec_conv3 = nn.ConvTranspose3d(16, 1, kernel_size=2, stride=2)
+
+    def _get_flatten_dim(self, grid_res):
+        # Pass a dummy tensor through the encoder to calculate the flattened size
+        dummy_input = torch.zeros(1, 1, grid_res, grid_res, grid_res)
+        dummy_output = self.encode(dummy_input)
+        return dummy_output.size(1)
 
     def encode(self, x):
         x = F.relu(self.enc_conv1(x))
@@ -52,4 +60,17 @@ class SDF_Autoencoder(nn.Module):
     def forward(self, x):
         z = self.encode(x)
         return self.decode(z)
+
+class LatentPredictor(nn.Module):
+    def __init__(self, input_dim=4, latent_dim=32):
+        super(LatentPredictor, self).__init__()
+        self.fc1 = nn.Linear(input_dim, 64)
+        self.fc2 = nn.Linear(64, 128)
+        self.fc3 = nn.Linear(128, latent_dim)
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
 
