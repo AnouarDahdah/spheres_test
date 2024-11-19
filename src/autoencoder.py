@@ -31,9 +31,16 @@ class SDF_Autoencoder(nn.Module):
 
     def _get_flatten_dim(self, grid_res):
         # Pass a dummy tensor through the encoder to calculate the flattened size
+        # First, compute the dimensions after all convolutions and pooling
         dummy_input = torch.zeros(1, 1, grid_res, grid_res, grid_res)
-        dummy_output = self.encode(dummy_input)
-        return dummy_output.size(1)
+        x = F.relu(self.enc_conv1(dummy_input))
+        x = self.pool(x)
+        x = F.relu(self.enc_conv2(x))
+        x = self.pool(x)
+        x = F.relu(self.enc_conv3(x))
+        x = self.pool(x)
+        # Flatten the tensor and return the flattened dimension size
+        return x.numel()  # This returns the number of elements in the tensor
 
     def encode(self, x):
         x = F.relu(self.enc_conv1(x))
@@ -73,4 +80,3 @@ class LatentPredictor(nn.Module):
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
-
