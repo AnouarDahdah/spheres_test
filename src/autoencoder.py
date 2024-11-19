@@ -7,9 +7,6 @@ class SDF_Autoencoder(nn.Module):
     def __init__(self, grid_res=20, latent_dim=32):
         super(SDF_Autoencoder, self).__init__()
         self.grid_res = grid_res
-        self.s1 = grid_res // 2
-        self.s2 = self.s1 // 2
-        self.s3 = self.s2 // 2
 
         # Encoder layers
         self.enc_conv1 = nn.Conv3d(1, 16, kernel_size=3, padding=1)
@@ -17,7 +14,7 @@ class SDF_Autoencoder(nn.Module):
         self.enc_conv3 = nn.Conv3d(32, 64, kernel_size=3, padding=1)
         self.pool = nn.MaxPool3d(2)
 
-        # Calculate flatten_dim dynamically based on the grid_res
+        # Manually calculate flatten_dim based on grid_res
         self.flatten_dim = self._get_flatten_dim(grid_res)
         
         # Latent space
@@ -30,17 +27,19 @@ class SDF_Autoencoder(nn.Module):
         self.dec_conv3 = nn.ConvTranspose3d(16, 1, kernel_size=2, stride=2)
 
     def _get_flatten_dim(self, grid_res):
-        # Pass a dummy tensor through the encoder to calculate the flattened size
-        # First, compute the dimensions after all convolutions and pooling
+        # Manually calculate the output size after convolutions and poolings
         dummy_input = torch.zeros(1, 1, grid_res, grid_res, grid_res)
+        
+        # Pass through the layers
         x = F.relu(self.enc_conv1(dummy_input))
         x = self.pool(x)
         x = F.relu(self.enc_conv2(x))
         x = self.pool(x)
         x = F.relu(self.enc_conv3(x))
         x = self.pool(x)
-        # Flatten the tensor and return the flattened dimension size
-        return x.numel()  # This returns the number of elements in the tensor
+        
+        # Return the number of elements in the output tensor
+        return x.numel()
 
     def encode(self, x):
         x = F.relu(self.enc_conv1(x))
@@ -49,8 +48,8 @@ class SDF_Autoencoder(nn.Module):
         x = self.pool(x)
         x = F.relu(self.enc_conv3(x))
         x = self.pool(x)
-        x = x.view(x.size(0), -1)
-        x = self.fc_encoder(x)
+        x = x.view(x.size(0), -1)  # Flatten the output
+        x = self.fc_encoder(x)     # Pass through fully connected encoder
         return x
 
     def decode(self, z):
