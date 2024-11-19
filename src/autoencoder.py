@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -69,9 +68,3 @@ class SDF_Autoencoder(nn.Module):
 
         z = self.encode(x)
         return self.decode(z)
-
-            self.fc_encoder = nn.Linear(self._get_flatten_dim(self.grid_res), 32)
-
-        z = self.encode(x)
-        return self.decode(z)
-
