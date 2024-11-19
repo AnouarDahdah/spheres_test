@@ -12,7 +12,7 @@ setup(
         'scikit-image',
         'pyyaml',
     ],
-    author='Your Name',
+    author='Anouar Dahdah',
     description='SDF Autoencoder for Sphere Reconstruction',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
