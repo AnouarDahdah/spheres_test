@@ -2,12 +2,12 @@
 model:
   grid_size: [32, 32, 32]
   batch_size: 16
-  latent_dim: 64
-  num_samples: 2000
+  latent_dim: 32
+  num_samples: 50
 
 training:
   autoencoder_epochs: 5
-  predictor_epochs: 10
+  predictor_epochs: 5
   learning_rate: 0.001
 
 data:
