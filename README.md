@@ -17,7 +17,7 @@ cd spheres_test
 python -m venv venv
 
 # Activate the virtual environment
-source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+source venv/bin/activate  
 
 # Install dependencies
 pip install -r requirements.txt
