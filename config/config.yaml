@@ -1,20 +1,25 @@
-
 model:
-  grid_res: 32
-  grid_size: [32, 32, 32]
-  batch_size: 16
-  latent_dim: 32
-  num_samples: 50
+  grid_res: 32  # Grid resolution for the 3D SDF grid, defining the voxel size (resolution for input SDF).
+  grid_size: [32, 32, 32]  # The size of the 3D grid (depth, height, width).
+  batch_size: 32  # The batch size used during training (also used in data generation).
+  latent_dim: 32  # The dimensionality of the latent space for the autoencoder.
+  num_samples: 300  # Number of samples to generate for training (adjusted from 50 for larger dataset).
 
 training:
-  autoencoder_epochs: 5
-  predictor_epochs: 5
-  learning_rate: 0.001
+  autoencoder_epochs: 15  # Number of epochs for training the autoencoder.
+  predictor_epochs: 1000  # Number of epochs for training the latent predictor.
+  learning_rate: 0.001  # Learning rate used in the Adam optimizer.
 
 data:
-  grid_min: -1.5
-  grid_max: 1.5
+  grid_min: -3.0  # Minimum value for the 3D grid (extended to match the grid in the code).
+  grid_max: 3.0  # Maximum value for the 3D grid (extended to match the grid in the code).
   sphere:
-    center_range: [-0.1, 0.1]
-    radius_range: [0.5, 1.0]
+    center_range: [-2.5, 2.5]  # Range of possible sphere centers along the x, y, and z axes.
+    radius_range: [0.3, 2.5]  # Range of possible sphere radii (adjusted to ensure spheres fit within grid).
 
+visualization:
+  isovalue: 0.0  # The isovalue for visualizing the SDF isosurface in 3D visualization (default 0.0).
+
+logging:
+  save_visualization: true  # Flag to indicate whether the 3D visualization should be saved to HTML.
+  log_file: "training_log.txt"  # File to store the training logs (optional).
