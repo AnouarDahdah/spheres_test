@@ -3,6 +3,7 @@ import numpy as np
 import plotly.graph_objects as go
 from skimage import measure
 import plotly.io as pio
+import os
 
 class SDFVisualizer:
     def __init__(self, grid_res=None, config=None):
@@ -25,11 +26,11 @@ class SDFVisualizer:
         else:
             # Default value
             self.grid_size = (32, 32, 32)
-            
+
         self.grid_min = -3
         self.grid_max = 3
         pio.renderers.default = "notebook"
-    
+
     def save_sdf_as_3d_isosurface(self, sdf, filename, isovalue=0.0):
         """
         Save SDF as 3D isosurface with improved visualization
@@ -42,19 +43,19 @@ class SDFVisualizer:
         # Convert to numpy if tensor
         if isinstance(sdf, torch.Tensor):
             sdf = sdf.detach().cpu().numpy()
-        
+
         # Handle batch and channel dimensions
         if sdf.ndim > 3:
             sdf = sdf[0]  # Remove batch dimension if present
         if sdf.ndim > 3:
             sdf = sdf[0]  # Remove channel dimension if present
-            
+
         # Ensure we have a 3D array
         assert sdf.ndim == 3, f"Expected 3D array, got shape {sdf.shape}"
-        
+
         # Print value range for debugging
         print(f"SDF value range: [{sdf.min():.4f}, {sdf.max():.4f}]")
-        
+
         try:
             # Generate the isosurface
             verts, faces, normals, values = measure.marching_cubes(
@@ -63,10 +64,10 @@ class SDFVisualizer:
                 allow_degenerate=False,
                 method='lewiner'
             )
-            
+
             # Scale vertices to match the grid range used in generation
             verts = verts / np.array(self.grid_size) * (self.grid_max - self.grid_min) + self.grid_min
-            
+
             # Create the 3D visualization
             fig = go.Figure(data=[go.Mesh3d(
                 x=verts[:, 0],
@@ -85,24 +86,24 @@ class SDFVisualizer:
                 ),
                 flatshading=True
             )])
-            
+
             # Update layout for better visualization
             fig.update_layout(
                 scene=dict(
-                    xaxis=dict(range=[self.grid_min, self.grid_max], 
+                    xaxis=dict(range=[self.grid_min, self.grid_max],
                               showbackground=True,
                               gridcolor="rgb(200, 200, 200)",
-                              zeroline=True, 
+                              zeroline=True,
                               zerolinecolor="rgb(128, 128, 128)"),
-                    yaxis=dict(range=[self.grid_min, self.grid_max], 
+                    yaxis=dict(range=[self.grid_min, self.grid_max],
                               showbackground=True,
                               gridcolor="rgb(200, 200, 200)",
-                              zeroline=True, 
+                              zeroline=True,
                               zerolinecolor="rgb(128, 128, 128)"),
-                    zaxis=dict(range=[self.grid_min, self.grid_max], 
+                    zaxis=dict(range=[self.grid_min, self.grid_max],
                               showbackground=True,
                               gridcolor="rgb(200, 200, 200)",
-                              zeroline=True, 
+                              zeroline=True,
                               zerolinecolor="rgb(128, 128, 128)"),
                     aspectmode='cube',
                     camera=dict(
@@ -120,16 +121,17 @@ class SDFVisualizer:
                 margin=dict(l=0, r=0, t=30, b=0),
                 showlegend=False
             )
-            
-            # Save the visualization
+
+            # Save the visualization (the filename can include the full path)
             fig.write_html(filename)
             print(f"Successfully saved visualization to {filename}")
-            
+
             return fig  # Return figure for optional display in notebook
-            
+
         except ValueError as e:
             print(f"Error generating isosurface: {str(e)}")
             print("Try adjusting the isovalue or checking the SDF value range")
-            
+
         except Exception as e:
             print(f"Unexpected error during visualization: {str(e)}")
+
