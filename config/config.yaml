@@ -3,12 +3,12 @@ model:
   grid_size: [32, 32, 32]  # The size of the 3D grid (depth, height, width).
   batch_size: 32  # The batch size used during training (also used in data generation).
   latent_dim: 32  # The dimensionality of the latent space for the autoencoder.
-  num_samples: 300  # Number of samples to generate for training (adjusted from 50 for larger dataset).
+  num_samples: 1000  # Number of samples to generate for training (adjusted from 50 for larger dataset).
 
 training:
-  autoencoder_epochs: 15  # Number of epochs for training the autoencoder.
-  predictor_epochs: 1000  # Number of epochs for training the latent predictor.
-  learning_rate: 0.001  # Learning rate used in the Adam optimizer.
+  autoencoder_epochs: 150  # Number of epochs for training the autoencoder.
+  predictor_epochs: 150  # Number of epochs for training the latent predictor.
+  learning_rate: 0.0005  # Learning rate used in the Adam optimizer.
 
 data:
   grid_min: -3.0  # Minimum value for the 3D grid (extended to match the grid in the code).

@@ -84,3 +84,27 @@ class SDFGenerator:
         sdf_values = distances - radius
         
         return sdf_values.unsqueeze(0).unsqueeze(0), torch.tensor([[*center, radius]])
+
+    def generate_train_test_split(self, batch_size, test_size=0.2, normalize=False):
+        """Generate train and test batches for SDFs and parameters.
+        
+        Args:
+            batch_size (int): Number of samples to generate for each batch
+            test_size (float): Fraction of data to use for testing (default 20%)
+            normalize (bool): Whether to normalize the SDF values
+            
+        Returns:
+            tuple: (train_sdf_batch, test_sdf_batch, train_params_batch, test_params_batch)
+        """
+        # Generate full data batch
+        full_sdf_batch, full_params_batch = self.generate_sphere_sdf_batch(batch_size, normalize)
+        
+        # Split the data into train and test sets
+        split_idx = int((1 - test_size) * batch_size)
+        train_sdf_batch = full_sdf_batch[:split_idx]
+        test_sdf_batch = full_sdf_batch[split_idx:]
+        train_params_batch = full_params_batch[:split_idx]
+        test_params_batch = full_params_batch[split_idx:]
+        
+        return train_sdf_batch, test_sdf_batch, train_params_batch, test_params_batch
+
