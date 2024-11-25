@@ -1,19 +1,22 @@
-import torch
 import numpy as np
 import plotly.graph_objects as go
+<<<<<<< HEAD
 from skimage import measure
 import plotly.io as pio
 import os
+=======
+from plotly.subplots import make_subplots
+>>>>>>> 0d1ca93e5ffc931f7379d01b92a83994adcd913e
 
 class SDFVisualizer:
-    def __init__(self, grid_res=None, config=None):
+    def __init__(self, grid_res=32):
+        self.grid_res = grid_res
+
+    def save_sdf_as_html(self, reconstructed_sdf, original_sdf, filename="sdf_comparison.html", title="SDF Comparison"):
         """
-        Initialize the SDF Visualizer
-        
-        Args:
-            grid_res: int or tuple - Grid resolution (for backward compatibility)
-            config: dict - Configuration dictionary containing model parameters
+        Save both the original and reconstructed SDFs as 3D isosurfaces in an HTML file.
         """
+<<<<<<< HEAD
         if config is not None:
             # If config is provided, use grid_size from config
             self.grid_size = config['model']['grid_size']
@@ -32,14 +35,46 @@ class SDFVisualizer:
         pio.renderers.default = "notebook"
 
     def save_sdf_as_3d_isosurface(self, sdf, filename, isovalue=0.0):
+=======
+        assert reconstructed_sdf.ndim == 3, f"Expected 3D array, got shape {reconstructed_sdf.shape}"
+        assert original_sdf.ndim == 3, f"Expected 3D array, got shape {original_sdf.shape}"
+
+        # Create the figure with two subplots
+        fig = make_subplots(
+            rows=1, cols=2,
+            subplot_titles=["Original SDF", "Reconstructed SDF"],
+            specs=[[{"type": "surface"}, {"type": "surface"}]]
+        )
+
+        # Create isosurfaces for both SDFs
+        original_surface = self.create_isosurface(original_sdf, title="Original SDF")
+        reconstructed_surface = self.create_isosurface(reconstructed_sdf, title="Reconstructed SDF")
+
+        # Add isosurfaces to subplots
+        fig.add_trace(original_surface, row=1, col=1)
+        fig.add_trace(reconstructed_surface, row=1, col=2)
+
+        # Update layout for better visualization
+        fig.update_layout(
+            title=title,
+            height=600,
+            width=1200,
+            showlegend=False,
+            scene=dict(aspectmode='cube'),
+            scene2=dict(aspectmode='cube')
+        )
+
+        # Save the figure as an HTML file
+        fig.write_html(filename)
+        print(f"Visualization saved to {filename}")
+
+    def create_isosurface(self, sdf_data, title="SDF"):
+>>>>>>> 0d1ca93e5ffc931f7379d01b92a83994adcd913e
         """
-        Save SDF as 3D isosurface with improved visualization
-        
-        Args:
-            sdf: torch.Tensor - The signed distance field [batch, channel, depth, height, width]
-            filename: str - Output filename for the HTML visualization
-            isovalue: float - The isosurface level value (default: 0.0)
+        Create a 3D isosurface from the SDF data using Plotly.
+        This will show the level set where the SDF value is close to zero.
         """
+<<<<<<< HEAD
         # Convert to numpy if tensor
         if isinstance(sdf, torch.Tensor):
             sdf = sdf.detach().cpu().numpy()
@@ -135,3 +170,33 @@ class SDFVisualizer:
         except Exception as e:
             print(f"Unexpected error during visualization: {str(e)}")
 
+=======
+        # Generate grid coordinates for the 3D space
+        x = np.linspace(-1, 1, self.grid_res)
+        y = np.linspace(-1, 1, self.grid_res)
+        z = np.linspace(-1, 1, self.grid_res)
+
+        # Create meshgrid for visualization (flattening it for isosurface plot)
+        X, Y, Z = np.meshgrid(x, y, z)
+        x_flat = X.flatten()
+        y_flat = Y.flatten()
+        z_flat = Z.flatten()
+        
+        # Flatten SDF data for use in isosurface plot
+        sdf_values = sdf_data.flatten()
+
+        # Create the isosurface plot using the SDF data
+        isosurface = go.Isosurface(
+            x=x_flat,
+            y=y_flat,
+            z=z_flat,
+            value=sdf_values,
+            isomin=-0.01,  # Display SDF values close to zero
+            isomax=0.01,
+            surface_count=1,  # Show only one surface (SDF = 0)
+            colorscale='Viridis',
+            caps=dict(x_show=False, y_show=False, z_show=False),
+            name=title
+        )
+        return isosurface
+>>>>>>> 0d1ca93e5ffc931f7379d01b92a83994adcd913e
