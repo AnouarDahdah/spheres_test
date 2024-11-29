@@ -1,40 +1,54 @@
+import torch
 import torch.nn as nn
 
-class HybridNetwork(nn.Module):
+class CNNHybridNetwork(nn.Module):
     def __init__(self, grid_size: int = 32, latent_dim: int = 64):
         super().__init__()
         self.grid_size = grid_size
-        input_size = grid_size ** 3
-
+        
         self.encoder = nn.Sequential(
+            nn.Conv3d(1, 16, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool3d(2),
+            nn.Conv3d(16, 32, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool3d(2),
+            nn.Conv3d(32, 64, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool3d(2),
             nn.Flatten(),
-            nn.Linear(input_size, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Linear(128, latent_dim)
+            nn.Linear(64 * (grid_size // 8) ** 3, latent_dim)
         )
-
+        
         self.param_to_latent = nn.Sequential(
-            nn.Linear(4, 32),
+            nn.Linear(4, 64),
             nn.ReLU(),
-            nn.Linear(32, latent_dim)
+            nn.Linear(64, latent_dim)
         )
-
-        self.decoder = nn.Sequential(
-            nn.Linear(latent_dim, 128),
+        
+        self.decoder_linear = nn.Linear(
+            latent_dim, 
+            64 * (grid_size // 8) ** 3
+        )
+        
+        self.decoder_cnn = nn.Sequential(
+            nn.ConvTranspose3d(64, 32, kernel_size=4, stride=2, padding=1),
             nn.ReLU(),
-            nn.Linear(128, 256),
+            nn.ConvTranspose3d(32, 16, kernel_size=4, stride=2, padding=1),
             nn.ReLU(),
-            nn.Linear(256, input_size)
+            nn.ConvTranspose3d(16, 1, kernel_size=4, stride=2, padding=1)
         )
 
     def forward_autoencoder(self, sdf):
         latent = self.encoder(sdf)
-        output = self.decoder(latent)
-        return output.view(-1, 1, self.grid_size, self.grid_size, self.grid_size), latent
-
+        return self.decode(latent), latent
+    
     def forward_params(self, params):
         latent = self.param_to_latent(params)
-        output = self.decoder(latent)
-        return output.view(-1, 1, self.grid_size, self.grid_size, self.grid_size)
+        return self.decode(latent)
+    
+    def decode(self, latent):
+        x = self.decoder_linear(latent)
+        x = x.view(-1, 64, self.grid_size // 8, 
+                   self.grid_size // 8, self.grid_size // 8)
+        return self.decoder_cnn(x)
