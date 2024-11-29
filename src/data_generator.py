@@ -7,37 +7,63 @@ class SDFGenerator:
     def __init__(self, grid_size: int = 32):
         self.grid_size = grid_size
         self.grid = self._create_grid()
-        
+
     def _create_grid(self):
-        x = torch.linspace(-1, 1, self.grid_size)
-        coords = torch.meshgrid(x, x, x, indexing='ij')
-        return torch.stack(coords, dim=-1)
+        x = np.linspace(-1, 1, self.grid_size)
+        y = np.linspace(-1, 1, self.grid_size)
+        z = np.linspace(-1, 1, self.grid_size)
+        X, Y, Z = np.meshgrid(x, y, z, indexing='ij')
+        return np.stack([X, Y, Z], axis=-1)
 
     def generate_sphere_sdf(self, center, radius):
-        center = torch.tensor(center, dtype=torch.float32)
-        distances = torch.norm(self.grid - center.view(1, 1, 1, 3), dim=-1)
-        return distances - radius
+        center = np.array(center)
+        points = self.grid.reshape(-1, 3)
+        distances = np.linalg.norm(points - center, axis=1)
+        sdf = distances - radius
+        return torch.FloatTensor(sdf.reshape(self.grid_size, self.grid_size, self.grid_size))
 
 class SDFDataset(Dataset):
-    def __init__(self, size: int, grid_size: int, train: bool = True, split: float = 0.8):
-        self.generator = SDFGenerator(grid_size=grid_size)
-        params_list = []
-        sdf_list = []
+    def __init__(self, config, split='train'):
+        self.config = config
+        self.split = split
+        self.generator = SDFGenerator(config.grid_size)
         
-        for _ in tqdm(range(size), desc='Generating dataset'):
-            center = np.random.uniform(-0.5, 0.5, size=3)
-            radius = np.random.uniform(0.2, 0.3)
+        # Generate dataset
+        center_range = 1.0 - config.boundary_margin - config.max_radius
+        self.centers = []
+        self.radii = []
+        self.sdfs = []
+        
+        dataset_size = config.dataset_size
+        if split == 'val':
+            dataset_size = dataset_size // 10
             
+        for _ in tqdm(range(dataset_size), desc=f'Generating {split} dataset'):
+            # Random center within bounds
+            center = np.random.uniform(-center_range, center_range, 3)
+            radius = np.random.uniform(config.min_radius, config.max_radius)
+            
+            # Generate SDF
             sdf = self.generator.generate_sphere_sdf(center, radius)
-            params_list.append(torch.tensor([*center, radius], dtype=torch.float32))
-            sdf_list.append(sdf.unsqueeze(0))
-        
-        data = torch.stack(params_list), torch.stack(sdf_list)
-        split_idx = int(split * size)
-        self.params, self.sdfs = [x[:(split_idx if train else -split_idx)] for x in data]
-    
+            
+            self.centers.append(torch.FloatTensor(center))
+            self.radii.append(torch.FloatTensor([radius]))
+            self.sdfs.append(sdf)
+
     def __len__(self):
-        return len(self.params)
-    
+        return len(self.sdfs)
+
     def __getitem__(self, idx):
-        return self.params[idx], self.sdfs[idx]
+        center = self.centers[idx]
+        radius = self.radii[idx]
+        sdf = self.sdfs[idx]
+        
+        params = torch.cat([center, radius])
+        sdf = sdf.unsqueeze(0)  # Add channel dimension
+        
+        # Data augmentation for training
+        if self.split == 'train':
+            # Random rotations could be added here
+            pass
+            
+        return params, sdf
