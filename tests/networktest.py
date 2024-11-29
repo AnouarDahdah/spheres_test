@@ -1,24 +1,26 @@
-import pytest
+import unittest
 import torch
-import sys
-from pathlib import Path
+from src.network import CNNHybridNetwork
 
-sys.path.append(str(Path(__file__).parent.parent))
-from src.network import HybridNetwork
+class TestCNNHybridNetwork(unittest.TestCase):
+    def setUp(self):
+        self.grid_size = 32
+        self.latent_dim = 64
+        self.model = CNNHybridNetwork(self.grid_size, self.latent_dim)
+        self.batch_size = 2
 
-def test_network_initialization():
-    model = HybridNetwork(grid_size=32, latent_dim=64)
-    assert isinstance(model, HybridNetwork)
+    def test_forward_autoencoder(self):
+        sdf = torch.randn(self.batch_size, 1, self.grid_size, self.grid_size, self.grid_size)
+        output, latent = self.model.forward_autoencoder(sdf)
+        
+        self.assertEqual(output.shape, sdf.shape)
+        self.assertEqual(latent.shape, (self.batch_size, self.latent_dim))
 
-def test_forward_autoencoder():
-    model = HybridNetwork(grid_size=32, latent_dim=64)
-    dummy_input = torch.randn(1, 1, 32, 32, 32)
-    output, latent = model.forward_autoencoder(dummy_input)
-    assert output.shape == (1, 1, 32, 32, 32)
-    assert latent.shape == (1, 64)
+    def test_forward_params(self):
+        params = torch.randn(self.batch_size, 4)
+        output = self.model.forward_params(params)
+        
+        self.assertEqual(output.shape, (self.batch_size, 1, self.grid_size, self.grid_size, self.grid_size))
 
-def test_forward_params():
-    model = HybridNetwork(grid_size=32, latent_dim=64)
-    dummy_params = torch.randn(1, 4)  # center (3) + radius (1)
-    output = model.forward_params(dummy_params)
-    assert output.shape == (1, 1, 32, 32, 32)
+if __name__ == '__main__':
+    unittest.main()
