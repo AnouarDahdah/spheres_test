@@ -1,13 +1,9 @@
-from dataclasses import dataclass
-
-@dataclass
-class Config:
-    batch_size: int = 4
-    epochs: int = 30
-    learning_rate: float = 0.0005
-    latent_dim: int = 64
-    grid_size: int = 32
-    dataset_size: int = 100
-    min_radius: float = 0.2
-    max_radius: float = 0.3
-    boundary_margin: float = 0.15
+batch_size: 4
+epochs: 30
+learning_rate: 0.0005
+latent_dim: 64
+grid_size: 32
+dataset_size: 100
+min_radius: 0.2
+max_radius: 0.3
+boundary_margin: 0.15
