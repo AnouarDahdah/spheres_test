@@ -1,17 +1,28 @@
-import torch
 import numpy as np
-import matplotlib.pyplot as plt
 from skimage import measure
+import torch
 
 def visualize_sdf(sdf, ax, title):
     if isinstance(sdf, torch.Tensor):
-        sdf = sdf.cpu().squeeze().numpy()
+        sdf = sdf.detach().cpu().numpy()
     
-    x, y, z = np.mgrid[-1:1:32j, -1:1:32j, -1:1:32j]
-    pts = np.column_stack((x.ravel(), y.ravel(), z.ravel()))
+    # Handle different input shapes
+    if sdf.ndim == 4:  # (1, 1, H, W)
+        sdf = sdf.squeeze()
+    elif sdf.ndim == 1:  # Flattened
+        sdf = sdf.reshape(32, 32, 32)
     
-    vertices, faces, _, _ = measure.marching_cubes(sdf.reshape(32, 32, 32))
+    # Calculate data range for proper level setting
+    data_min, data_max = np.min(sdf), np.max(sdf)
+    level = 0 if data_min <= 0 <= data_max else (data_min + data_max) / 2
     
+    # Generate mesh
+    vertices, faces, _, _ = measure.marching_cubes(sdf, level=level)
+    
+    # Scale vertices to [-1, 1] range
+    vertices = (vertices / sdf.shape[0]) * 2 - 1
+    
+    # Plot
     ax.plot_trisurf(
         vertices[:, 0],
         vertices[:, 1],
@@ -28,3 +39,4 @@ def visualize_sdf(sdf, ax, title):
     ax.set_xlim([-1, 1])
     ax.set_ylim([-1, 1])
     ax.set_zlim([-1, 1])
+    ax.view_init(elev=20, azim=45)
