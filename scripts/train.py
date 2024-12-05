@@ -5,30 +5,50 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import yaml
 import sys
-from pathlib import Path
+import os
+from dataclasses import dataclass
 
-sys.path.append(str(Path(__file__).parent.parent))
+# Fix for Colab path
+current_dir = os.path.dirname(os.path.abspath("__file__"))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
 from src.network import HybridNetwork
 from src.data_generator import SDFDataset
 
+@dataclass
+class DataConfig:
+    grid_size: int
+    dataset_size: int
+    min_radius: float
+    max_radius: float
+    boundary_margin: float
+
 def train_model(config):
     print("Training model...")
+
+    # Create DataConfig object from config dict
+    data_config = DataConfig(
+        grid_size=config['training']['grid_size'],
+        dataset_size=config['training']['dataset_size'],
+        min_radius=config['generation']['min_radius'],
+        max_radius=config['generation']['max_radius'],
+        boundary_margin=config['generation']['boundary_margin']
+    )
+
     train_loader = DataLoader(
-        SDFDataset(
-            size=config['training']['dataset_size'],
-            grid_size=config['training']['grid_size']
-        ),
+        SDFDataset(data_config, split='train'),
         batch_size=config['training']['batch_size'],
         shuffle=True,
         num_workers=0
     )
 
     model = HybridNetwork(
-        grid_size=config['training']['grid_size'], 
+        grid_size=config['training']['grid_size'],
         latent_dim=config['training']['latent_dim']
     )
     optimizer = optim.Adam(
-        model.parameters(), 
+        model.parameters(),
         lr=config['training']['learning_rate']
     )
     criterion = nn.MSELoss()
@@ -91,16 +111,6 @@ def train_model(config):
         print(f"Params Loss: {metrics['params_loss'][-1]:.4f}")
         print("-" * 50)
 
-        # Save intermediate metrics every 10 epochs
-        if (epoch + 1) % 10 == 0:
-            intermediate_metrics = {
-                'epoch': epoch + 1,
-                'metrics': metrics,
-                'config': config
-            }
-            metrics_path = Path('output/intermediate_metrics.pth')
-            torch.save(intermediate_metrics, metrics_path)
-
     print("Training completed!")
     return model, metrics
 
@@ -108,27 +118,27 @@ if __name__ == "__main__":
     try:
         with open("config/config.yaml", 'r') as f:
             config = yaml.safe_load(f)
-            
+
         # Create output directory if it doesn't exist
-        Path('output').mkdir(exist_ok=True)
-        
+        os.makedirs('output', exist_ok=True)
+
         # Train model and get metrics
         model, metrics = train_model(config)
-        
+
         # Save model
-        model_path = Path('output/sphere_model.pth')
+        model_path = os.path.join('output', 'sphere_model.pth')
         torch.save(model.state_dict(), model_path)
         print(f"Model saved to {model_path}")
-        
+
         # Save final metrics
         final_metrics = {
             'metrics': metrics,
             'config': config
         }
-        metrics_path = Path('output/training_metrics.pth')
+        metrics_path = os.path.join('output', 'training_metrics.pth')
         torch.save(final_metrics, metrics_path)
         print(f"Training metrics saved to {metrics_path}")
-        
+
     except Exception as e:
         print(f"Training error: {str(e)}")
         raise
